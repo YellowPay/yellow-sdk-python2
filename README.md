@@ -1,9 +1,10 @@
 Yellow Python SDK
 =====================
-This is the Yellow Python SDK. This simple SDK contains couple of python methods that makes it easy to integrate with the Yellow API. To get started just `git clone https://github.com/YellowPay/yellow-sdk-python.git`.
+This is the Yellow Python SDK. This simple SDK contains couple of python methods that makes it easy to integrate with the Yellow API. To get started just:
+`git clone https://github.com/YellowPay/yellow-sdk-python.git`.
 
 Creating Invoices
-----------------------------
+------------------
 To create an invoice, simply call the `create_invoice` function. As an example, create an `example.py` file with the following snippet in the root of the repo you just cloned:
 ```
 import json
@@ -22,12 +23,12 @@ payload = {
             'redirect': "https://example.com/success/" # Optional: Redirect URL after the invoice is paid
           }
 
-data = yellow.create_invoice(api_key, api_secret, payload)
+created_invoice = yellow.create_invoice(api_key, api_secret, payload)
 
 # Print the result beautifully!
-print json.dumps(data, sort_keys=True, indent=4)
+print json.dumps(created_invoice, sort_keys=True, indent=4)
 ```
-Save the file and run `python example.py` from the repo root. You should see something similar to the following in the terminal:
+Save the file and run `python example.py` from the repo root. You should see something similar to the following in your terminal:
 ```
 {
     "address": "155xsayoDXxRFP9rxDoecmpVUo7y5xKtc7", # Invoice Address
@@ -46,4 +47,13 @@ Save the file and run `python example.py` from the repo root. You should see som
     "url": "https://cdn.yellowpay.co/invoice.5f0d082e.html?invoiceId=6dd264975861fddbfe4404ed995f1ca4" # Direct URL for the invoice. You can use it to embed the invoice widget in an iframe on your website.
 }
 
+```
+Query an Invoice
+------------------
+After you create an invoice, you may need to query the invoice to stay up to date with its status. Just add the following snippet to the `example.py` file you created above:
+```
+invoice_id = created_invoice['id']
+
+invoice = yellow.query_invoice(api_key, api_secret, invoice_id)
+print json.dumps(invoice, sort_keys=True, indent=4)
 ```

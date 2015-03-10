@@ -14,6 +14,10 @@ payload = {
             'redirect': "https://example.com/success/"
           }
 
-data = yellow.create_invoice(api_key, api_secret, payload)
-print json.dumps(data, sort_keys=True, indent=4)
-#yellow.query_invoice()
+invoice_created = yellow.create_invoice(api_key, api_secret, payload)
+print json.dumps(invoice_created, sort_keys=True, indent=4)
+
+invoice_id = invoice_created['id']
+
+invoice = yellow.query_invoice(api_key, api_secret, invoice_id)
+print json.dumps(invoice, sort_keys=True, indent=4)
