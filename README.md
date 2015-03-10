@@ -1,7 +1,9 @@
 Yellow Python SDK
 =====================
 This is the Yellow Python SDK. This simple SDK contains couple of python methods that makes it easy to integrate with the Yellow API. To get started just:
-`git clone https://github.com/YellowPay/yellow-sdk-python.git`.
+```
+git clone https://github.com/YellowPay/yellow-sdk-python.git
+```
 
 Creating Invoices
 ------------------
@@ -57,3 +59,4 @@ invoice_id = created_invoice['id']
 invoice = yellow.query_invoice(api_key, api_secret, invoice_id)
 print json.dumps(invoice, sort_keys=True, indent=4)
 ```
+You should see exactly the same returned data you got from `create_invoice` above!
