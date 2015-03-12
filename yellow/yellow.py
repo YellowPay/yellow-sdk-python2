@@ -25,8 +25,6 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
         'base_price': base_price
     }
 
-    #payload['callback'] = callback if callback else pass
-
     if callback payload['callback'] = callback
 
     body = json.dumps(payload)
