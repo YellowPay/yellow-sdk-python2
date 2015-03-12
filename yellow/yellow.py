@@ -4,35 +4,30 @@ import hmac
 import time
 import hashlib
 
+from yellow.exceptions import *
 
-PROD_ENDPOINT = "https://api.yellowpay.co"
-STAGE_ENDPOINT = "https://api-stage.yellowpay.co"
+YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
-
-def create_invoice(api_key, api_secret, payload, production=True):
+def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
     """
     :param str      api_key:        the API_KEY to use for authentication
     :param str      api_secret:     the API_SECRET to use for authentication
-    :param dict     payload:        the data object to be passed in the request
-                                        required keys: base_ccy, base_price
-                                        optional keys: callback, redirect
-    :param bool     production:     to use our production endpoint, pass True.
-                                    to use our staging endpoint, pass False.
-                                    if you don't pass it at all, we'll use
-                                    our production endpoint by default.
+    :param str      base_ccy:       the currency code. ex. "USD"
+    :param str      base_price:     the invoice price in the above currency. ex. "1.5"
+    :param str      callback:       the URL we'll POST payment notifications to. (optional)
+
     """
 
-    assert(api_key), "Please pass in your api_key."
-    assert(api_secret), "Please pass in your api_secret."
+    url = "{yellow_server}/api/invoice/".format(yellow_server=YELLOW_SERVER)
 
-    assert(type(payload) is dict), "payload should be a dictionary"
+    payload = {
+        'base_ccy': base_ccy,
+        'base_price': base_price
+    }
 
-    assert(payload['base_ccy']), "base_ccy key is required for the payload dict"
-    assert(payload['base_price']), "base_price key is required for the payload dict"
+    #payload['callback'] = callback if callback else pass
 
-    endpoint = PROD_ENDPOINT if production else STAGE_ENDPOINT
-
-    url = "{endpoint}/api/invoice/".format(endpoint=endpoint)
+    if callback payload['callback'] = callback
 
     body = json.dumps(payload)
 
@@ -40,41 +35,27 @@ def create_invoice(api_key, api_secret, payload, production=True):
 
     signature = get_signature(url, body, nonce, api_secret)
 
-
     headers = {'content-type': 'application/json',
                 'API-Key': api_key,
                 'API-Nonce' : nonce,
                 'API-Sign' : signature}
 
-    r = requests.post(url,
-                      data=body,
-                      headers=headers,
-                      verify=True)
+    try:
+      r = requests.post(url, data=body, headers=headers, verify=True)
+    except Exception as req:
+      raise YellowRequestError(req.args)
+    handle_response(r)
 
-    if 200 == r.status_code:
-        return r.json()
-    else:
-        return r.text
 
-def query_invoice(api_key, api_secret, invoice_id, production=True):
+def query_invoice(api_key, api_secret, invoice_id):
     """
-    :param str      api_key:        the API_KEY to use for authentication.
-    :param str      api_secret:     the API_SECRET to use for authentication.
-    :param str      invoice_id:     the ID of the invoice you want to query.
-    :param bool     production:     to use our production endpoint, pass True.
-                                    to use our staging endpoint, pass False.
-                                    if you don't pass it at all, we'll use
-                                    our production endpoint by default.
+    :param str      api_key:        the API_KEY to use for authentication
+    :param str      api_secret:     the API_SECRET to use for authentication
+    :param str      invoice_id:     the ID of the invoice you're querying
     """
 
-    assert(api_key), "Please pass in your api_key."
-    assert(api_secret), "Please pass in your api_secret."
-    assert(invoice_id), "Please pass in the ID of the invoice you want to query."
 
-
-    endpoint = PROD_ENDPOINT if production else STAGE_ENDPOINT
-
-    url = "{endpoint}/api/invoice/{invoice_id}".format(endpoint=endpoint, invoice_id=invoice_id)
+    url = "{yellow_server}/api/invoice/{invoice_id}".format(yellow_server=YELLOW_SERVER, invoice_id=invoice_id)
 
     nonce = int(time.time() * 1000)
 
@@ -88,10 +69,11 @@ def query_invoice(api_key, api_secret, invoice_id, production=True):
 
     r = requests.get(url, headers=headers, verify=True)
 
-    if 200 == r.status_code:
-        return r.json()
-    else:
-        return r.text
+    try:
+      r = requests.get(url, headers=headers, verify=True)
+    except Exception as req:
+      raise YellowRequestError(req.args)
+    handle_response(r)
 
 def get_signature(url, body, nonce, api_secret):
     ''' To secure communication between merchant server and Yellow server we
@@ -129,3 +111,12 @@ def get_signature(url, body, nonce, api_secret):
     signature = h.hexdigest()
 
     return signature
+
+
+def handle_response(response):
+    if response.ok:
+        return response.json()
+    response_error = YellowApiError('{code}:{message}'.format(code=response.status_code, message=response.text))
+    response_error.code = response.status_code
+    response_error.message = response.message
+    raise response_error
