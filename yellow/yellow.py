@@ -1,10 +1,11 @@
 import requests
-import json
 import hmac
 import time
 import hashlib
+import os
+import json
 
-from yellow.exceptions import *
+from exceptions import *
 
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
@@ -18,6 +19,7 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
 
     """
 
+
     url = "{yellow_server}/api/invoice/".format(yellow_server=YELLOW_SERVER)
 
     payload = {
@@ -25,7 +27,8 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
         'base_price': base_price
     }
 
-    if callback payload['callback'] = callback
+    if callback:
+        payload['callback'] = callback
 
     body = json.dumps(payload)
 
@@ -42,7 +45,7 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
       r = requests.post(url, data=body, headers=headers, verify=True)
     except Exception as req:
       raise YellowRequestError(req.args)
-    handle_response(r)
+    return handle_response(r)
 
 
 def query_invoice(api_key, api_secret, invoice_id):
@@ -65,47 +68,35 @@ def query_invoice(api_key, api_secret, invoice_id):
                 'API-Nonce' : nonce,
                 'API-Sign' : signature}
 
-    r = requests.get(url, headers=headers, verify=True)
-
     try:
       r = requests.get(url, headers=headers, verify=True)
     except Exception as req:
       raise YellowRequestError(req.args)
-    handle_response(r)
+    return handle_response(r)
+
+def verify_ipn(api_secret, host_url, request):
+    """
+    :param str      api_secret:     the API_SECRET to use for verification
+    :param str      host_url:       the callback URL you set when you created the invoice
+    :param dict     request:        The request object returned from the invoice query
+
+    :returns bool                   This function returns True if the signature matches (verified)
+                                                  returns False if the signature DOESN'T match (not verified)
+    """
+
+    request_signature = request.META['HTTP_API_SIGN']
+    request_nonce = request.META['HTTP_API_NONCE']
+    request_body = request.body
+
+    signature = get_signature(host_url, request_body, request_nonce, api_secret)
+
+    return True if signature == request_signature else False
 
 def get_signature(url, body, nonce, api_secret):
-    ''' To secure communication between merchant server and Yellow server we
-        use a form of HMAC authentication.
-        (http://en.wikipedia.org/wiki/Hash-based_message_authentication_code)
-
-        When submitting a request to Yellow 3 additional header elements are
-        needed:
-        API-Key: your public API key, you can get this from your merchant
-                 dashboard
-        API-Nonce: an ever-increasing number that is different for each request
-                   (e.g., current UNIX time in milliseconds)
-        API-Sign: an HMAC hash signed with your API secret and converted to
-                  hexadecimal. The message to be hahed and signed is the
-                  concatenation of the nonce, fully-qualified request URL,
-                  and any request parameters.
-
-        This allows us to authenticate the request as coming from you,
-        prevents anyone else from modifying or replaying your request, and
-        ensures your secret key is never exposed (even in a Heartbleed-type
-        scenario where the SSL layer itself is compromised).
-        '''
-
-    # Concatenate the components of the request to be hashed. They should
-    # always be concatenated in this order: Nonce, fully-qualified URL
-    # (e.g. https://yellowpay.co/api/invoice/), body
     message = str(nonce) + url + body
-
-    # Hash and sign the message with your API secret
     h = hmac.new(api_secret,
                  message,
                  hashlib.sha256)
-
-    # Convert the signature to hexadecimal
     signature = h.hexdigest()
 
     return signature
@@ -113,8 +104,8 @@ def get_signature(url, body, nonce, api_secret):
 
 def handle_response(response):
     if response.ok:
-        return response.json()
+        return response
     response_error = YellowApiError('{code}:{message}'.format(code=response.status_code, message=response.text))
     response_error.code = response.status_code
-    response_error.message = response.message
+    response_error.message = response.text
     raise response_error
