@@ -2,7 +2,7 @@ Yellow Python SDK
 =====================
 This is the Yellow Python SDK. This simple SDK contains couple of python functions that makes it easy to integrate with the Yellow API. To get started just:
 ```
-git clone https://github.com/YellowPay/yellow-sdk-python.git
+pip install yellow-sdk-python
 ```
 
 Examples

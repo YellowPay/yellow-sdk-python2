@@ -11,6 +11,8 @@ YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
 def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
     """
+    This function creates a yellow invoices based on the bellow parameters:
+
     :param str      api_key:        the API_KEY to use for authentication
     :param str      api_secret:     the API_SECRET to use for authentication
     :param str      base_ccy:       the currency code. ex. "USD"
@@ -20,7 +22,7 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
     """
 
 
-    url = "{yellow_server}/api/invoice/".format(yellow_server=YELLOW_SERVER)
+    url = "{yellow_server}/v1/invoice/".format(yellow_server=YELLOW_SERVER)
 
     payload = {
         'base_ccy': base_ccy,
@@ -50,13 +52,15 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
 
 def query_invoice(api_key, api_secret, invoice_id):
     """
+    Use this function to query an invoice you created earlier using its ID 
+
     :param str      api_key:        the API_KEY to use for authentication
     :param str      api_secret:     the API_SECRET to use for authentication
     :param str      invoice_id:     the ID of the invoice you're querying
     """
 
 
-    url = "{yellow_server}/api/invoice/{invoice_id}".format(yellow_server=YELLOW_SERVER, invoice_id=invoice_id)
+    url = "{yellow_server}/v1/invoice/{invoice_id}".format(yellow_server=YELLOW_SERVER, invoice_id=invoice_id)
 
     nonce = int(time.time() * 1000)
 
@@ -76,6 +80,8 @@ def query_invoice(api_key, api_secret, invoice_id):
 
 def verify_ipn(api_secret, host_url, request):
     """
+    This is a helper function to verify that the request you just received really is from Yellow.
+
     :param str      api_secret:     the API_SECRET to use for verification
     :param str      host_url:       the callback URL you set when you created the invoice
     :param dict     request:        The request object returned from the invoice query
@@ -93,6 +99,9 @@ def verify_ipn(api_secret, host_url, request):
     return True if signature == request_signature else False
 
 def get_signature(url, body, nonce, api_secret):
+    """
+    A tiny function used by our SDK to sign and verify requests.
+    """
     message = str(nonce) + url + body
     h = hmac.new(api_secret,
                  message,
@@ -103,6 +112,9 @@ def get_signature(url, body, nonce, api_secret):
 
 
 def handle_response(response):
+    """
+    A tiny function used by our SDK to handle the response we get from our API.
+    """
     if response.ok:
         return response
     response_error = YellowApiError('{code}:{message}'.format(code=response.status_code, message=response.text))
