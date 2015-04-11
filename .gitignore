@@ -2,3 +2,7 @@
 dist/
 build/
 yellow_sdk_python.egg-info/
+
+.project
+
+.pydevproject
