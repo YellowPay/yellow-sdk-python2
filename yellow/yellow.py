@@ -4,34 +4,32 @@ import time
 import hashlib
 import os
 import json
+import platform
 
 from exceptions import *
 
+VERSION = "0.2"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
-def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
+def create_invoice(api_key, api_secret, **kwargs):
     """
     This function creates a yellow invoices based on the bellow parameters:
 
     :param str      api_key:        the API_KEY to use for authentication
     :param str      api_secret:     the API_SECRET to use for authentication
-    :param str      base_ccy:       the currency code. ex. "USD"
-    :param str      base_price:     the invoice price in the above currency. ex. "1.5"
-    :param str      callback:       the URL we'll POST payment notifications to. (optional)
+    :param          **kwargs:       keyword arguments matching the expected
+                                    HTTP arguments described here:
+                                    http://yellowpay.co/docs/api/#creating-invoices
+                                    for example:
+                                    yellow.create_invoice(api_key, api_secret,
+                                                          base_ccy="USD",
+                                                          base_price="0.1")
 
     """
 
-
     url = "{yellow_server}/v1/invoice/".format(yellow_server=YELLOW_SERVER)
 
-    payload = {
-        'base_ccy': base_ccy,
-        'base_price': base_price
-    }
-
-    if callback:
-        payload['callback'] = callback
-
+    payload = kwargs
     body = json.dumps(payload)
 
     nonce = int(time.time() * 1000)
@@ -41,12 +39,14 @@ def create_invoice(api_key, api_secret, base_ccy, base_price, callback=None):
     headers = {'content-type': 'application/json',
                 'API-Key': api_key,
                 'API-Nonce' : nonce,
-                'API-Sign' : signature}
+                'API-Sign' : signature,
+                'API-Platform' : _get_os_version(),
+                'API-Version' : VERSION }
 
     try:
-      r = requests.post(url, data=body, headers=headers, verify=True)
+        r = requests.post(url, data=body, headers=headers, verify=True)
     except Exception as req:
-      raise YellowRequestError(req.args)
+        raise YellowRequestError(req.args)
     return handle_response(r)
 
 
@@ -66,16 +66,17 @@ def query_invoice(api_key, api_secret, invoice_id):
 
     signature = get_signature(url, "", nonce, api_secret)
 
-
     headers = {'content-type': 'application/json',
                 'API-Key': api_key,
                 'API-Nonce' : nonce,
-                'API-Sign' : signature}
+                'API-Sign' : signature,
+                'API-Platform' : _get_os_version(),
+                'API-Version' : VERSION }
 
     try:
-      r = requests.get(url, headers=headers, verify=True)
+        r = requests.get(url, headers=headers, verify=True)
     except Exception as req:
-      raise YellowRequestError(req.args)
+        raise YellowRequestError(req.args)
     return handle_response(r)
 
 def verify_ipn(api_secret, host_url, request):
@@ -121,3 +122,10 @@ def handle_response(response):
     response_error.code = response.status_code
     response_error.message = response.text
     raise response_error
+
+def _get_os_version():
+    return "{system} {release} - Python {python}".format(
+                system=platform.system(),
+                release=platform.release(),
+                python=platform.python_version()
+            )
