@@ -1,8 +1,7 @@
 *.pyc
 dist/
 build/
-yellow_sdk_python.egg-info/
-
+yellow_sdk.egg-info/
 .project
 
 .pydevproject
