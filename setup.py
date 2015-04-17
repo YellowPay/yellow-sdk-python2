@@ -1,8 +1,7 @@
 from setuptools import setup
-import yellow
 
 setup(name='yellow-sdk-python',
-      version=yellow.VERSION,
+      version="0.2.1",
       description='Yellow Python SDK. A python module to easily integrate with the Yellow bitcoin payments API.',
       url='http://yellowpay.co',
       author='Eslam A. Hefnawy',
