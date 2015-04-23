@@ -6,10 +6,12 @@ import os
 import json
 import platform
 
-from exceptions import *
 
-VERSION = "0.2.1"
+VERSION = "0.2.3"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
+
+class YellowApiError(Exception): pass
+class YellowRequestError(Exception): pass
 
 def create_invoice(api_key, api_secret, **kwargs):
     """
