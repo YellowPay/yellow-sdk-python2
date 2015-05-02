@@ -20,7 +20,7 @@ base_ccy = "USD"                    # Required: A 3-letter currency code
 base_price = "0.05"                 # Required: The invoice price in the above currency
 callback = "https://example.com"    # Optional: URL for Yellow to POST to as a callback
 
-created_invoice = yellow.create_invoice(api_key, api_secret, base_ccy, base_price, callback)
+created_invoice = yellow.create_invoice(api_key, api_secret, base_ccy=base_ccy, base_price=base_price, callback=callback)
 
 # Print the result beautifully!
 print json.dumps(created_invoice.json(), sort_keys=True, indent=4)
@@ -55,9 +55,8 @@ You should see exactly the same returned data you got from `create_invoice` abov
 
 Verifying Yellow POST requests
 ---------------------------
-To verify that the request you just receive really is from us, we created a helper function that checks the signature of the request. Just pass in your api_secret, the callback URL you passed when you created the invoice, and the request object.
-
-This function will return True if the signature matches (verified), or False if it doesn't match (not verified).
+To verify that the request you just receive really is from us, we created a helper function that checks the signature of the request. This method will return true if the signature matches (verified), or false if it doesn't match (not verified).
 ```
-is_verified = yellow.verify_ipn(api_secret, host_url, request)
+is_verified = yellow.verify_ipn(api_secret, host_url, request_signature, request_nonce, request_body)
 ```
+Since this method only works in the context of a web app, check the [full demo code](https://github.com/YellowPay/yellowdemo) for more info on how to use it.
