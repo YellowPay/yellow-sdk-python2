@@ -7,7 +7,7 @@ import json
 import platform
 
 
-VERSION = "0.2.3"
+VERSION = "0.2.5"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
 class YellowApiError(Exception): pass
@@ -81,21 +81,21 @@ def query_invoice(api_key, api_secret, invoice_id):
         raise YellowRequestError(req.args)
     return handle_response(r)
 
-def verify_ipn(api_secret, host_url, request):
+def verify_ipn(api_secret, host_url, request_nonce, request_signature, request_body):
     """
     This is a helper function to verify that the request you just received really is from Yellow.
 
-    :param str      api_secret:     the API_SECRET to use for verification
-    :param str      host_url:       the callback URL you set when you created the invoice
-    :param dict     request:        The request object returned from the invoice query
+    :param str      api_secret:         the API_SECRET to use for verification
+    :param str      host_url:           the callback URL you set when you created the invoice
+    :param str      request_nonce:      the nonce header of the request
+    :param str      request_signature:  the signature header of the request
+    :param str      request_body:       the body of the request
 
     :returns bool                   This function returns True if the signature matches (verified)
                                                   returns False if the signature DOESN'T match (not verified)
     """
 
-    request_signature = request.META['HTTP_API_SIGN']
-    request_nonce = request.META['HTTP_API_NONCE']
-    request_body = request.body
+
 
     signature = get_signature(host_url, request_body, request_nonce, api_secret)
 
@@ -119,7 +119,7 @@ def handle_response(response):
     A tiny function used by our SDK to handle the response we get from our API.
     """
     if response.ok:
-        return response
+        return response.json()
     response_error = YellowApiError('{code}:{message}'.format(code=response.status_code, message=response.text))
     response_error.code = response.status_code
     response_error.message = response.text
