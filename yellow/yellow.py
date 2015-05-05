@@ -7,7 +7,7 @@ import json
 import platform
 
 
-VERSION = "0.2.5"
+VERSION = "0.2.6"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
 class YellowApiError(Exception): pass
@@ -34,7 +34,7 @@ def create_invoice(api_key, api_secret, **kwargs):
     payload = kwargs
     body = json.dumps(payload)
 
-    nonce = int(time.time() * 1000)
+    nonce = str(time.time() * 1000000)
 
     signature = get_signature(url, body, nonce, api_secret)
 
@@ -64,7 +64,7 @@ def query_invoice(api_key, api_secret, invoice_id):
 
     url = "{yellow_server}/v1/invoice/{invoice_id}".format(yellow_server=YELLOW_SERVER, invoice_id=invoice_id)
 
-    nonce = int(time.time() * 1000)
+    nonce = str(time.time() * 1000000)
 
     signature = get_signature(url, "", nonce, api_secret)
 
@@ -105,7 +105,7 @@ def get_signature(url, body, nonce, api_secret):
     """
     A tiny function used by our SDK to sign and verify requests.
     """
-    message = str(nonce) + url + body
+    message = nonce + url + body
     h = hmac.new(api_secret,
                  message,
                  hashlib.sha256)
