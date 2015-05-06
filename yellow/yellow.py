@@ -7,7 +7,7 @@ import json
 import platform
 
 
-VERSION = "0.2.7"
+VERSION = "0.3.0"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
 class YellowApiError(Exception): pass
@@ -34,13 +34,13 @@ def create_invoice(api_key, api_secret, **kwargs):
     payload = kwargs
     body = json.dumps(payload)
 
-    nonce = str(int(time.time() * 1000000))
-
+    nonce = int(time.time() * 1000)
+    
     signature = get_signature(url, body, nonce, api_secret)
 
     headers = {'content-type': 'application/json',
                 'API-Key': api_key,
-                'API-Nonce' : nonce,
+                'API-Nonce' : str(nonce),
                 'API-Sign' : signature,
                 'API-Platform' : _get_os_version(),
                 'API-Version' : VERSION }
@@ -64,13 +64,13 @@ def query_invoice(api_key, api_secret, invoice_id):
 
     url = "{yellow_server}/v1/invoice/{invoice_id}".format(yellow_server=YELLOW_SERVER, invoice_id=invoice_id)
 
-    nonce = str(int(time.time() * 1000000))
-
+    nonce = int(time.time() * 1000)
+    
     signature = get_signature(url, "", nonce, api_secret)
 
     headers = {'content-type': 'application/json',
                 'API-Key': api_key,
-                'API-Nonce' : nonce,
+                'API-Nonce' : str(nonce),
                 'API-Sign' : signature,
                 'API-Platform' : _get_os_version(),
                 'API-Version' : VERSION }
@@ -105,7 +105,7 @@ def get_signature(url, body, nonce, api_secret):
     """
     A tiny function used by our SDK to sign and verify requests.
     """
-    message = nonce + url + body
+    message = str(nonce) + url + body
     h = hmac.new(api_secret,
                  message,
                  hashlib.sha256)
