@@ -7,7 +7,7 @@ import json
 import platform
 
 
-VERSION = "0.3.0"
+VERSION = "0.3.1"
 YELLOW_SERVER = "https://" + os.environ.get("YELLOW_SERVER", "api.yellowpay.co")
 
 class YellowApiError(Exception): pass
@@ -43,7 +43,7 @@ def create_invoice(api_key, api_secret, **kwargs):
                 'API-Nonce' : str(nonce),
                 'API-Sign' : signature,
                 'API-Platform' : _get_os_version(),
-                'API-Version' : VERSION }
+                'API-Plugin' : VERSION }
 
     try:
         r = requests.post(url, data=body, headers=headers, verify=True)
@@ -73,7 +73,7 @@ def query_invoice(api_key, api_secret, invoice_id):
                 'API-Nonce' : str(nonce),
                 'API-Sign' : signature,
                 'API-Platform' : _get_os_version(),
-                'API-Version' : VERSION }
+                'API-Plugin' : VERSION }
 
     try:
         r = requests.get(url, headers=headers, verify=True)
