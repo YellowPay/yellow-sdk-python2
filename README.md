@@ -23,7 +23,7 @@ callback = "https://example.com"    # Optional: URL for Yellow to POST to as a c
 created_invoice = yellow.create_invoice(api_key, api_secret, base_ccy=base_ccy, base_price=base_price, callback=callback)
 
 # Print the result beautifully!
-print json.dumps(created_invoice.json(), sort_keys=True, indent=4)
+print json.dumps(created_invoice, sort_keys=True, indent=4)
 ```
 You should see something similar to the following in your terminal:
 ```
@@ -49,7 +49,7 @@ To query an invoice that you created, just pass in the `invoice_id` to the `quer
 ```
 invoice_id = "..." # invoice ID you received when you created the invoice.
 invoice = yellow.query_invoice(api_key, api_secret, invoice_id)
-print json.dumps(invoice.json(), sort_keys=True, indent=4)
+print json.dumps(invoice, sort_keys=True, indent=4)
 ```
 You should see exactly the same returned data you got from `create_invoice` above!
 
